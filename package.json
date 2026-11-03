@@ -1,0 +1,31 @@
+{
+  "name": "wayan-x402-celo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Wayan Warrior on Celo: AI agents and people buy Wayan content packages with USA₮, USDT or USDC through x402, and get a redeem code for wayanwarrior.pro.",
+  "license": "MIT",
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "buy": "tsx scripts/buy.ts",
+    "register": "tsx scripts/register-8004.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hono/node-server": "1.19.5",
+    "@x402/core": "2.28.0",
+    "@x402/evm": "2.28.0",
+    "@x402/fetch": "2.28.0",
+    "@x402/hono": "2.28.0",
+    "hono": "4.10.4",
+    "viem": "2.57.10"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.0",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
+  },
+  "engines": { "node": ">=20.12" }
+}
