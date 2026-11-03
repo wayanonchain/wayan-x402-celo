@@ -7,6 +7,8 @@ This repository is its **x402 storefront on Celo mainnet**. Any AI agent or wall
 HTTP request, paying **USA₮, USDT or USDC** through the official [Celo x402 facilitator](https://x402.celo.org).
 Built for the Celo × Ripio *Agents on Open Rails* hackathon (track: Open Corridors, USA₮ with x402).
 
+**Buying a package (people and agents): see [BUYING.md](BUYING.md).**
+
 ## How it works
 
 ```
