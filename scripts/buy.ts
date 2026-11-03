@@ -10,14 +10,22 @@ import { wrapFetchWithPayment, x402Client } from '@x402/fetch'
 import { ExactEvmScheme } from '@x402/evm/exact/client'
 import { decodePaymentResponseHeader } from '@x402/core/http'
 import { privateKeyToAccount } from 'viem/accounts'
-import { CFG } from '../src/config.js'
+import { CFG, PACKAGES, type PackageId } from '../src/config.js'
 
 const pkg = process.argv[2] ?? 'topup_200'
 const base = (process.env.STOREFRONT_URL ?? 'http://localhost:8402').replace(/\/$/, '')
 const key = process.env.BUYER_PRIVATE_KEY as `0x${string}` | undefined
 if (!key) throw new Error('Set BUYER_PRIVATE_KEY (a wallet holding the stablecoin)')
 
-const client = new x402Client().register('eip155:*', new ExactEvmScheme(privateKeyToAccount(key)))
+// PAY_TOKEN=USDC|USDT|USAT picks the token this wallet holds; by default the first option offered (USA₮ on mainnet).
+const want = CFG.tokens.find((t) => t.symbol === (process.env.PAY_TOKEN ?? '').toUpperCase())
+const client = new x402Client((_version, options) =>
+  (want && options.find((o) => o.asset.toLowerCase() === want.address.toLowerCase())) || options[0],
+).register('eip155:*', new ExactEvmScheme(privateKeyToAccount(key)))
+// The client refuses to pay more than $1 by default; the cap is raised exactly to this package's list price.
+const listPrice = PACKAGES[pkg as PackageId]?.usd
+if (!listPrice) throw new Error(`Unknown package ${pkg}`)
+client.setSpendControls({ maxAmountPerPayment: `$${listPrice}` })
 const pay = wrapFetchWithPayment(fetch, client)
 
 const res = await pay(`${base}/buy/${pkg}`)
