@@ -40,7 +40,17 @@ export const NETWORKS = {
   },
 } as const
 
-export const NET = (process.env.X402_NETWORK === 'mainnet' ? 'mainnet' : 'testnet') as keyof typeof NETWORKS
+export type NetworkName = keyof typeof NETWORKS
+
+/** testnet when unset; a typo is an error, never a silent switch to another network. */
+export function parseNetwork(value: string | undefined): NetworkName {
+  const v = (value ?? '').trim()
+  if (v === '') return 'testnet'
+  if (v === 'testnet' || v === 'mainnet') return v
+  throw new Error(`X402_NETWORK must be "testnet" or "mainnet", got "${v}"`)
+}
+
+export const NET = parseNetwork(process.env.X402_NETWORK)
 export const CFG = NETWORKS[NET]
 export const PORT = Number(process.env.PORT ?? 8402)
 export const PUBLIC_URL = (process.env.PUBLIC_URL ?? `http://localhost:${PORT}`).replace(/\/$/, '')
@@ -51,6 +61,9 @@ export const PACKAGES = {
   topup_200: { usd: 15, title: 'Top-up: +1 video (200 credits)' },
 } as const
 export type PackageId = keyof typeof PACKAGES
+
+/** Wayan's pay-to wallet. The buyer refuses an offer that pays anyone else (override with EXPECTED_PAY_TO). */
+export const WAYAN_PAY_TO = getAddress('0x2B94E5E4eFE0c3b4893B8e4ed4291007472Ab302')
 
 /** ERC-8004 Identity Registry on Celo (same address on mainnet and Sepolia per the 8004 deployments). */
 export const IDENTITY_REGISTRY = getAddress('0x8004A169FB4a3325136EB29fA0ceB6D2e539a432')

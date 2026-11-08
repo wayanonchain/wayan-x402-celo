@@ -51,11 +51,13 @@ With this repository:
 
 ```bash
 npm ci
-BUYER_PRIVATE_KEY=0x... PAY_TOKEN=USDC STOREFRONT_URL=https://agents.wayanwarrior.pro npm run buy -- topup_200
+X402_NETWORK=mainnet PAY_TOKEN=USDC BUYER_PRIVATE_KEY=0x... STOREFRONT_URL=https://agents.wayanwarrior.pro npm run buy -- topup_200
 ```
 
-`PAY_TOKEN` picks the token the wallet holds (`USAT`, `USDT` or `USDC`). The script refuses to pay more than the
-package's list price.
+`X402_NETWORK` and `PAY_TOKEN` are required: the network you pay on and the token the wallet holds (`USAT`, `USDT`
+or `USDC`). The script signs only an offer on that network, in that token, to Wayan's pay-to address
+(`0x2B94E5E4eFE0c3b4893B8e4ed4291007472Ab302`) at the package's exact price. Anything else stops it before a
+signature exists, and a failed purchase exits with code 1 without paying again.
 
 With `@x402/fetch` in your own agent:
 
@@ -64,9 +66,19 @@ import { wrapFetchWithPayment, x402Client } from '@x402/fetch'
 import { ExactEvmScheme } from '@x402/evm/exact/client'
 import { privateKeyToAccount } from 'viem/accounts'
 
-const client = new x402Client().register('eip155:*', new ExactEvmScheme(privateKeyToAccount(KEY)))
+const CELO = 'eip155:42220'
+const USDC = '0xcebA9300f2b948710d2653dD7B07f33A8B32118C'
+const WAYAN = '0x2B94E5E4eFE0c3b4893B8e4ed4291007472Ab302'
+// Sign only USDC on Celo, to Wayan, at exactly $15 (6 decimals). Never fall back to another offer.
+const client = new x402Client((_v, offers) => {
+  const ok = offers.find((o) => o.network === CELO && o.asset.toLowerCase() === USDC.toLowerCase()
+    && o.payTo.toLowerCase() === WAYAN.toLowerCase() && o.amount === '15000000')
+  if (!ok) throw new Error('No matching offer, not paying')
+  return ok
+}).register(CELO, new ExactEvmScheme(privateKeyToAccount(KEY)))
 client.setSpendControls({ maxAmountPerPayment: '$15' }) // the client refuses anything above $1 by default
 const res = await wrapFetchWithPayment(fetch, client)('https://agents.wayanwarrior.pro/buy/topup_200')
+if (!res.ok) throw new Error(`purchase failed: HTTP ${res.status}`) // do not retry the payment blindly
 const { code, redeem_url } = await res.json()
 ```
 

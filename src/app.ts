@@ -65,6 +65,13 @@ export function createApp(env: NodeJS.ProcessEnv = process.env) {
   )
   app.get('/.well-known/agent-card.json', (c) => c.json(agentCard()))
 
+  // Only GET can buy. Hono runs GET handlers for HEAD, but the x402 middleware matches payment rules on the original
+  // method, so a HEAD would reach the handler unverified. Refuse every other method before any payment logic.
+  app.use('/buy/*', async (c, next) => {
+    if (c.req.method !== 'GET') return c.json({ error: 'method not allowed: buy with GET' }, 405, { Allow: 'GET' })
+    await next()
+  })
+
   if (!live) {
     app.get('/buy/:id', (c) => {
       if (!(c.req.param('id') in PACKAGES)) return c.json({ error: 'unknown package' }, 404)
@@ -86,6 +93,7 @@ export function createApp(env: NodeJS.ProcessEnv = process.env) {
   app.use(paymentMiddleware(buildRoutes(payTo!) as any, resourceServer)) // routes first, then the server
 
   app.get('/buy/:id', async (c) => {
+    if (c.req.method !== 'GET') return c.json({ error: 'method not allowed: buy with GET' }, 405, { Allow: 'GET' })
     const id = c.req.param('id') as PackageId
     if (!(id in PACKAGES)) return c.json({ error: 'unknown package' }, 404)
     // The middleware has verified the payment by now; the header names who paid and with which nonce.

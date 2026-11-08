@@ -90,7 +90,7 @@ Docker: `docker build -t wayan-x402 . && docker run -p 8402:8402 --env-file .env
 Buy as an agent (a wallet holding USA₮, USDT or USDC on Celo; no CELO needed):
 
 ```bash
-BUYER_PRIVATE_KEY=0x... PAY_TOKEN=USDC STOREFRONT_URL=https://agents.wayanwarrior.pro npm run buy -- topup_200
+X402_NETWORK=mainnet PAY_TOKEN=USDC BUYER_PRIVATE_KEY=0x... STOREFRONT_URL=https://agents.wayanwarrior.pro npm run buy -- topup_200
 ```
 
 Register the agent identity (agent wallet with a little CELO):
